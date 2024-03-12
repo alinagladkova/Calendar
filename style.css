@@ -1,0 +1,136 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #d5d8dc;
+  font-family: "Roboto", sans-serif;
+}
+
+img {
+  max-width: 100%;
+}
+
+.btn {
+  cursor: pointer;
+  background-color: transparent;
+  border-color: transparent;
+  color: #fff;
+}
+
+.root {
+  max-width: 1620px;
+  margin: 0 auto;
+}
+
+.form {
+  margin: 20px;
+}
+
+.form__field-wrapper {
+}
+
+.form__label {
+  color: #203a67;
+  font-size: 24px;
+  font-weight: 900;
+  margin-right: 50px;
+}
+
+.form__select {
+  font-size: 16px;
+}
+
+.form__option {
+}
+
+.calendar-wrapper {
+  background-color: #203a67;
+  min-width: 330px;
+}
+
+.calendar {
+  color: #fff;
+}
+
+.calendar__header {
+  display: flex;
+}
+
+.calendar__current {
+  display: flex;
+}
+
+.calendar__month {
+}
+
+.calendar__arrows {
+}
+
+.calendar__left-arrow {
+}
+
+.calendar__right-arrow {
+}
+
+.calendar__btn {
+  display: flex;
+}
+
+.btn--hide {
+}
+
+.calendar__main {
+  padding: 20px;
+}
+
+.calendar__main ul {
+  display: flex;
+  list-style: none;
+  flex-wrap: wrap;
+  text-align: center;
+}
+
+.calendar__main ul li {
+  position: relative;
+  width: calc(100% / 7);
+}
+
+.calendar__weeks {
+}
+
+.calendar__weeks li {
+  font-weight: 500;
+}
+
+.calendar__days li {
+  z-index: 1;
+  cursor: pointer;
+  margin-top: 30px;
+}
+
+.calendar__days {
+  margin-bottom: 20px;
+}
+
+.calendar__days li::before {
+  position: absolute;
+  content: "";
+  height: 30px;
+  width: 30px;
+  top: 50%;
+  left: 50%;
+  z-index: -1;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.calendar__days li:hover::before {
+  background: red;
+}
+
+.calendar__days--inactive li {
+  color: grey;
+}
