@@ -1,8 +1,10 @@
 "use strict";
 
-const weeks = ["ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "ВСК"];
+import { Swiper } from "/node_modules/swiper/swiper-bundle.mjs";
 
-const days = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31];
+const week = ["ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "ВС"]; // этот массив точно оставляем
+const months = ["январь", "февраль", "март", "апрель", "май", "июнь", "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"];
+//"январь", "февраль", "март", "апрель", "май", "июнь", "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"
 
 function createElement(html) {
   const root = document.createElement("div");
@@ -35,6 +37,7 @@ class BasicComponent {
   }
 }
 
+//не закончен пока
 class Header extends BasicComponent {
   constructor() {
     super();
@@ -45,13 +48,13 @@ class Header extends BasicComponent {
   }
 
   _getTemplate() {
-    return `<form action="#" method="post" class="form">
-							<div class="form__field-wrapper">
-								<label for="year" class="form__label">Календарь мероприятий</label>
-								<select name="year" id="year" class="form__select">
-									<option value="2024" class="form__option" selected>2024</option>
-									<option value="2025" class="form__option">2025</option>
-									<option value="2026" class="form__option">2026</option>
+    return `<form action="#" method="post" class="header-form">
+							<div class="header-form__field-wrapper">
+								<label for="year" class="header-form__label">Календарь мероприятий</label>
+								<select name="year" id="year" class="header-form__select">
+									<option value="2024" class="header-form__option" selected>2024</option>
+									<option value="2025" class="header-form__option">2025</option>
+									<option value="2026" class="header-form__option">2026</option>
 								</select>
 							</div>
       			</form>`;
@@ -59,9 +62,64 @@ class Header extends BasicComponent {
 }
 
 class CalendarWrapper extends BasicComponent {
-  constructor(Calendar) {
+  constructor(dateData, months, week, Calendar, CalendarHeader, monthSlider, activeSlide, Slide, CalendarMain, WeekDays, days, Day) {
     super();
+    this._dateData = dateData;
+    this._months = months;
+    this._week = week;
     this._Calendar = Calendar;
+    this._CalendarHeader = CalendarHeader;
+    this._monthSlider = monthSlider;
+    this._activeSlide = activeSlide;
+
+    this._Slide = Slide;
+    this._CalendarMain = CalendarMain;
+    this._WeekDays = WeekDays;
+    this._days = days;
+    this._Day = Day;
+    this._init();
+  }
+  _init() {
+    super._init();
+    console.log(this._activeSlide);
+    this._render();
+  }
+
+  _render() {
+    this._element.insertAdjacentElement(
+      "afterbegin",
+      new this._Calendar(
+        this._dateData,
+        this._months,
+        this._week,
+        this._CalendarHeader,
+        this._monthSlider,
+        this._Slide,
+        this._CalendarMain,
+        this._WeekDays,
+        this._days,
+        this._Day
+      ).element
+    );
+  }
+  _getTemplate() {
+    return `<div class="calendar-wrapper"></div>`;
+  }
+}
+
+class Calendar extends BasicComponent {
+  constructor(dateData, months, week, CalendarHeader, monthSlider, Slide, CalendarMain, WeekDays, days, Day) {
+    super();
+    this._dateData = dateData;
+    this._months = months;
+    this._week = week;
+    this._CalendarHeader = CalendarHeader;
+    this._monthSlider = monthSlider;
+    this._Slide = Slide;
+    this._CalendarMain = CalendarMain;
+    this._WeekDays = WeekDays;
+    this._days = days;
+    this._Day = Day;
     this._init();
   }
   _init() {
@@ -70,63 +128,395 @@ class CalendarWrapper extends BasicComponent {
   }
 
   _render() {
-    this._element.innerHTML = "";
-    this._element.insertAdjacentElement("afterbegin", this._addCalendar());
-  }
-
-  _addCalendar() {
-    return new this._Calendar().element;
+    this._element.insertAdjacentElement(
+      "beforeend",
+      new this._CalendarHeader(this._dateData, this._months, this._monthSlider, this._Slide, this._days).element
+    );
+    this._element.insertAdjacentElement(
+      "beforeend",
+      new this._CalendarMain(this._dateData, this._months, this._week, this._WeekDays, this._days, this._Day).element
+    );
   }
 
   _getTemplate() {
-    return `<div class="calendar-wrapper"></div>`;
+    return `<div class="calendar"></div>`;
   }
 }
 
-class Calendar extends BasicComponent {
-  constructor() {
-    super();
+//доделать свертышь + текущий месяц в карусели
 
+/*
+Задачи:
+- при нажатии на стрелку Prev меняется не только название месяца, но и отображение дней месяца в самом календаре
+- выделять текущий день
+- отображать дни предыдущего и следующего месяцев
+*/
+
+class CalendarHeader extends BasicComponent {
+  _state = {
+    activeMonth: 0,
+  };
+
+  constructor(dateData, months, monthSlider, Slide, days) {
+    super();
+    this._dateData = dateData;
+    this._months = months;
+    this._monthSlider = monthSlider;
+    this._Slide = Slide;
+    this._days = days;
     this._init();
   }
   _init() {
     super._init();
+    this._monthSlider;
+    this._addListeners();
+    this._setStateActiveMonth();
+    this._render();
+  }
+
+  _addListeners() {
+    this._subElements.rightBtn.addEventListener("click", (e) => {
+      e.target.dispatchEvent(
+        new CustomEvent("switchToNextMonth", {
+          bubbles: true,
+          detail: {
+            monthNumber: ++this._dateData.currentMonth + 1,
+          },
+        })
+      );
+      this._days.renderUpdateNext();
+    });
+    this._subElements.leftBtn.addEventListener("click", (e) => {
+      e.target.dispatchEvent(
+        new CustomEvent("switchToPrevMonth", {
+          bubbles: true,
+          detail: {
+            monthNumber: ++this._dateData.currentMonth - 1,
+          },
+        })
+      );
+      this._days.renderUpdatePrev();
+    });
+  }
+
+  _setStateActiveMonth() {} //
+
+  _getActiveMonth(html) {
+    //
+    return console.log(html); //
+  }
+
+  _generateSlides() {
+    return this._months.map((monthName) => {
+      return new this._Slide(monthName, this._getActiveMonth.bind(this)).element;
+    });
+  }
+
+  _render() {
+    this._subElements.wrapper.innerHTML = "";
+    this._subElements.wrapper.append(...this._generateSlides());
   }
 
   _getTemplate() {
-    return `<div class="calendar">
-							<div class="calendar__header">
-								<div class="calendar__current">
-									<div class="calendar__arrows">
-										<div class="calendar__left-arrow">
-											<i class="fa-light fa-chevron-left"></i>
-											<p>август</p>
-										</div>
-										<p class="calendar__month">сентябрь</p>
-										<div class="calendar__right-arrow">
-										<p>октябрь</p>
-											<i class="fa-light fa-chevron-right"></i>
-										</div>
-									</div>
-								</div>
-								<button class="btn calendar__btn btn--hide">
-									<p>Свернуть</p>
-									<i class="fa-light fa-chevron-down"></i>
-								</button>
+    return `<div class="calendar-header">
+							<div class="swiper">
+								<div class="swiper-wrapper" data-element = "wrapper"></div>
+								<div class="btn swiper-button-prev"><i class="fa-solid fa-chevron-left" data-element = "leftBtn"></i></div>
+								<div class="btn swiper-button-next"><i class="fa-solid fa-chevron-right" data-element = "rightBtn"></i></div>
 							</div>
-							<div class="calendar__main"></div>
+							<button class="btn calendar-header__btn btn--hide">
+								<p class="calendar-header__text">Свернуть</p>
+								<i class="fa-solid fa-chevron-down"></i>
+							</button>
 						</div>`;
+  }
+}
+
+class Slide extends BasicComponent {
+  constructor(monthName, callback) {
+    super();
+    this._monthName = monthName;
+    this._callback = callback;
+    this._init();
+  }
+
+  _init() {
+    super._init();
+    //как выбрать активный слайд
+  }
+
+  _getActiveSlide() {
+    if (this._element.className === `swiper-slide-active`) {
+      console.log(this._callback(this._element));
+      this._callback(this._element);
+    }
+  }
+
+  _getTemplate() {
+    return `<div class="swiper-slide" data-element = "slide">${this._monthName}</div>`;
+  }
+}
+
+class CalendarMain extends BasicComponent {
+  constructor(dateData, months, week, WeekDays, days, Day) {
+    super();
+    this._dateData = dateData;
+    this._months = months;
+    this._week = week;
+    this._WeekDays = WeekDays;
+    this._days = days;
+    this._Day = Day;
+    this._init();
+  }
+
+  _init() {
+    super._init();
+    this._render();
+  }
+  _render() {
+    this._element.insertAdjacentElement("beforeend", new this._WeekDays(this._week).element);
+    this._element.insertAdjacentElement("beforeend", this._days.element);
+  }
+
+  _getTemplate() {
+    return `<div class="calendar__main"></div>`;
+  }
+}
+
+//пока оставляем    //работаем тут с днями недели
+class WeekDays extends BasicComponent {
+  constructor(week) {
+    super();
+    this._week = week;
+    this._init();
+  }
+
+  _init() {
+    super._init();
+    this._render();
+  }
+
+  _generateItems() {
+    return this._week.map((weekDay) => {
+      return `<li>${weekDay}</li>`;
+    });
+  }
+
+  _render() {
+    this._element.innerHTML = this._generateItems().join("");
+  }
+
+  _getTemplate() {
+    return `<ul class="calendar__weekdays"></ul>`;
+  }
+}
+
+class Days extends BasicComponent {
+  _currMonthDays = [];
+  _prevMonthDays = [];
+  _nextMonthDays = [];
+
+  _state = {
+    activeMonth: 0,
+  };
+
+  constructor(dateData, months, Day) {
+    super();
+    this._dateData = dateData;
+    this._months = months;
+    this._Day = Day;
+    this._init();
+  }
+
+  _init() {
+    super._init();
+    this._getCurrentMonthDays();
+    // this._getPrevMonthDays();
+    // this._setStateActiveMonth();
+    console.log(this._dateData);
+    // this._getPrevMonth;
+    this._render();
+  }
+
+  // _getDay() {
+  //   if (this._today == 0) {
+  //     this._today = 7;
+  //   }
+  //   return this._today - 1;
+  // }
+
+  //активный месяц = текущий месяц +/-1 при каждом клике и должен соответствовать i в массиве месяцев
+  //сюда активный должен приходить из слайдера
+  // _setStateActiveMonth() {
+  //   // this._dateData.currentMonth;
+  //   this._months.find((month, i) => {
+  //     //this._state.activeMonth
+  //     if (this._state.activeMonth === i) {
+  //       console.log(month);
+  //       return month;
+  //     }
+  //   });
+  // }
+
+  // _getPrevMonth() {
+  //   this._dateData.currentMonth + 1;
+  //   this._render();
+  // }
+
+  // _getFirstDateOfMonth() {
+  //   return new Date(this._dateData.currentYear, this._dateData.currentMonth, 1).getDate(); //firstDay
+  // }
+
+  _getLastDateOfMonth() {
+    return new Date(this._dateData.currentYear, this._dateData.currentMonth + 1, 0).getDate(); //lastDay
+  }
+
+  // _getLastDateOfPrevMonth() {
+  //   return new Date(this._dateData.currentYear, this._dateData.currentMonth, 0).getDate(); //lastDayofPrevMonth
+  // }
+
+  // _getPrevMonthDays() {
+  //   for (let i = this._getFirstDateOfMonth(); i > 0; i--) {
+  //     let prev = this._getLastDateOfPrevMonth() - i + 1;
+  //     console.log(prev);
+  //     this._prevMonthDays.push(prev);
+  //     // this._days += this._getLastDateOfPrevMonth() - i + 1;
+  //   }
+  // }
+
+  // _getPrevMonthDays() {
+  //   for (let i = this._getFirstDateOfMonth(); i > 0; i--) {
+  //     this._prevMonthDays.push(i);
+  //     // let prev = this._getLastDateOfPrevMonth() - i + 1;
+  //     // console.log(prev);
+  //     // this._prevMonthDays.push(prev);
+  //     // console.log(this._prevMonthDays);
+  //   }
+  // }
+
+  //заполняем текущий месяц
+  //должен вызываться в ините и при нажатии стрелочки следующего месяца, убрать из рендера
+  _getCurrentMonthDays() {
+    for (let i = 1; i <= this._getLastDateOfMonth(); i++) {
+      this._currMonthDays.push(i);
+    }
+  }
+
+  getNextMonthDays(nextMonth) {
+    let lastDateNextMonth = new Date(this._dateData.currentYear, nextMonth, 0).getDate();
+
+    for (let i = 1; i <= lastDateNextMonth; i++) {
+      this._nextMonthDays.push(i);
+    }
+  }
+
+  getPrevMonthDays(prevMonth) {
+    let lastDatePrevMonth = new Date(this._dateData.currentYear, prevMonth, 0).getDate();
+
+    for (let i = 1; i <= lastDatePrevMonth; i++) {
+      this._prevMonthDays.push(i);
+      console.log(this._prevMonthDays);
+    }
+  }
+
+  // _getCurrentDay() {
+  //   if (this._today) {
+  //     this._days += this._today;
+  //   }
+  // }
+
+  _generateCurrentDays() {
+    return this._currMonthDays.map((day) => {
+      return new this._Day(day, { curr: true, prev: false, next: false }).element;
+      // if (this._dateData.today === day) {
+      //   return new this._Day(day, { curr: true, prev: false, next: false }).element;
+      // }
+      // return new this._Day(day, { curr: false, prev: false, next: false }).element;
+    });
+  }
+
+  _generateNextDays() {
+    return this._nextMonthDays.map((day) => {
+      this._nextMonthDays = [];
+      return new this._Day(day, { curr: true, prev: false, next: false }).element;
+    });
+  }
+  //неправильно отображает
+  _generatePrevDays() {
+    console.log(this._prevMonthDays);
+    return this._prevMonthDays.map((day) => {
+      this._prevMonthDays = [];
+      return new this._Day(day, { curr: true, prev: false, next: false }).element;
+    });
+  }
+
+  _render() {
+    this._element.innerHTML = "";
+    // this._element.append(...this._generatePrevDays());
+    // console.log(this._generatePrevDays());
+    // this._element.innerHTML = "";
+    this._element.append(...this._generateCurrentDays());
+  }
+
+  renderUpdateNext() {
+    this._element.innerHTML = "";
+    this._element.append(...this._generateNextDays());
+  }
+
+  //работает неверно!
+  renderUpdatePrev() {
+    this._element.innerHTML = "";
+    this._element.append(...this._generatePrevDays());
+  }
+
+  _getTemplate() {
+    return ` <ul class="calendar__days"></ul>`;
+  }
+}
+
+class Day extends BasicComponent {
+  constructor(day, { curr, prev, next }) {
+    super();
+    this._day = day;
+    this._curr = curr;
+    this._prev = prev;
+    this._next = next;
+
+    this._init();
+  }
+
+  _init() {
+    super._init();
+    this._render();
+  }
+  //передать состояние today, prev и next, закинуть их в условия
+
+  _render() {
+    this._currDay ? this._element.classList.add("day--today") : "";
+    this._prev ? this._element.classList.add("day--prev") : "";
+    // this._element.classList.add("day--prev");
+    // this._element.classList.add("day--next");
+  }
+  _getTemplate() {
+    return `<li class="day">${this._day}</li>`;
   }
 }
 
 const root = document.querySelector(".root");
 const header = new Header();
-const calendarWrapper = new CalendarWrapper(Calendar);
-
+const days = new Days(
+  { date: new Date(), today: new Date().getDate(), currentMonth: new Date().getMonth(), currentYear: new Date().getFullYear() },
+  months,
+  Day
+);
 //================Custom Events
-// root.addEventListener("openProperties", (e) => {
-//   popupProductWithProperty.open(e.detail.properties);
-// });
+root.addEventListener("switchToNextMonth", (e) => {
+  days.getNextMonthDays(e.detail.monthNumber);
+});
+
+root.addEventListener("switchToPrevMonth", (e) => {
+  days.getPrevMonthDays(e.detail.monthNumber);
+});
 
 //================Debounce
 // function debounce(handler, ms) {
@@ -144,6 +534,48 @@ const calendarWrapper = new CalendarWrapper(Calendar);
 
 //=================
 
+let activeSlide = document.querySelector(".swiper-slide-active");
+// console.log(activeSlide);
+// const activeSlide = document.querySelector(".swiper-slide-active"); //это надо выше вызова функции
+
+const calendarWrapper = new CalendarWrapper(
+  { date: new Date(), today: new Date().getDate(), currentMonth: new Date().getMonth(), currentYear: new Date().getFullYear() },
+  months,
+  week,
+  Calendar,
+  CalendarHeader,
+  Swiper,
+  // getActiveSlide(),
+  activeSlide,
+  // slideFunc,
+  Slide,
+  CalendarMain,
+  WeekDays,
+  days,
+  Day
+);
 root.insertAdjacentElement("afterbegin", header.element);
 root.insertAdjacentElement("beforeend", calendarWrapper.element);
-// root.insertAdjacentElement("beforeend", calendar.element);
+// const slideFunc = getActiveSlide(activeSlide);
+// console.log(activeSlide);
+new Swiper(".swiper", {
+  speed: 400,
+  loop: true,
+  slidesPerView: 3,
+  initialSlide: new Date().getMonth(),
+  navigation: {
+    nextEl: ".swiper-button-next",
+    prevEl: ".swiper-button-prev",
+  },
+  keyboard: {
+    enabled: true,
+  },
+  mousewheel: true,
+});
+
+// function getActiveSlide(activeSlide) {
+//   // console.log(activeSlide);
+//   return activeSlide;
+// }
+
+// const SearchForSlide = getActiveSlide();

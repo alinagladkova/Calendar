@@ -1,3 +1,5 @@
+/* @import "/node_modules/swiper/swiper-bundle.css"; */
+
 * {
   margin: 0;
   padding: 0;
@@ -5,7 +7,9 @@
 }
 
 body {
-  background-color: #d5d8dc;
+  /* background-color: #e9ddbb; */
+  background-image: url(/img/dym_rozovyj_pelena_115937_1920x1080.jpg);
+  background-size: cover;
   font-family: "Roboto", sans-serif;
 }
 
@@ -17,73 +21,121 @@ img {
   cursor: pointer;
   background-color: transparent;
   border-color: transparent;
-  color: #fff;
+  color: rgb(121, 19, 70);
 }
 
 .root {
-  max-width: 1620px;
+  max-width: 1500px;
   margin: 0 auto;
 }
 
-.form {
-  margin: 20px;
+.header-form {
+  margin: 20px 70px;
 }
 
-.form__field-wrapper {
+.header-form__field-wrapper {
 }
 
-.form__label {
-  color: #203a67;
-  font-size: 24px;
+.header-form__label {
+  color: rgb(236, 215, 234);
+  font-size: 28px;
   font-weight: 900;
   margin-right: 50px;
 }
 
-.form__select {
+.header-form__select {
   font-size: 16px;
+  border: transparent;
+  padding: 5px 10px;
+  border-radius: 3px;
+  box-shadow: 1px 1px 5px #8f8766;
+  color: rgb(121, 19, 70);
+  font-weight: 700;
 }
 
-.form__option {
+.header-form__option {
 }
 
 .calendar-wrapper {
-  background-color: #203a67;
+  position: relative;
+  background-color: rgb(236, 215, 234);
   min-width: 330px;
+  margin: 30px 50px;
+  padding: 30px 40px;
+  border-radius: 15px;
+  box-shadow: 5px 5px 10px #8f8766;
 }
 
 .calendar {
-  color: #fff;
+  color: rgb(121, 19, 70);
 }
 
-.calendar__header {
+.calendar::after {
+  content: "";
+  position: absolute;
+  display: block;
+  bottom: 5%;
+  left: 0;
+  height: 1px;
+  width: 100%;
+  background-color: rgb(121, 85, 19);
+}
+
+.calendar-header {
   display: flex;
+  width: 100%;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgb(121, 85, 19);
 }
 
-.calendar__current {
+.swiper {
+  position: relative;
   display: flex;
+  width: 100%;
+  max-width: 500px;
+  margin-left: 0;
+  overflow: hidden;
 }
 
-.calendar__month {
-}
-
-.calendar__arrows {
-}
-
-.calendar__left-arrow {
-}
-
-.calendar__right-arrow {
-}
-
-.calendar__btn {
+.swiper-wrapper {
   display: flex;
+  padding-left: 45%;
+}
+
+.swiper-slide {
+}
+
+.swiper-slide-active {
+  font-weight: 900;
+}
+.swiper-button-prev {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.swiper-button-next {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.calendar-header__btn {
+  display: flex;
+  width: 100px;
+}
+
+.calendar-header__text {
+  margin-right: 10px;
+  font-size: 16px;
 }
 
 .btn--hide {
 }
 
 .calendar__main {
-  padding: 20px;
+  padding: 20px 0;
 }
 
 .calendar__main ul {
@@ -98,14 +150,11 @@ img {
   width: calc(100% / 7);
 }
 
-.calendar__weeks {
+.calendar__weekdays li {
+  font-weight: 900;
 }
 
-.calendar__weeks li {
-  font-weight: 500;
-}
-
-.calendar__days li {
+.day {
   z-index: 1;
   cursor: pointer;
   margin-top: 30px;
@@ -115,7 +164,7 @@ img {
   margin-bottom: 20px;
 }
 
-.calendar__days li::before {
+.day::before {
   position: absolute;
   content: "";
   height: 30px;
@@ -127,10 +176,17 @@ img {
   transform: translate(-50%, -50%);
 }
 
-.calendar__days li:hover::before {
-  background: red;
+.day:hover::before {
+  background: rgb(179, 121, 174);
 }
 
-.calendar__days--inactive li {
+.day--prev {
   color: grey;
+}
+
+.day--today {
+  font-size: 20px;
+  font-weight: 900;
+  color: rgb(120, 57, 161);
+  /* border: 1px solid rgb(120, 57, 161); */
 }
