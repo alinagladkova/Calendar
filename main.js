@@ -147,9 +147,10 @@ class Calendar extends BasicComponent {
 
 /*
 Задачи:
-- при нажатии на стрелку Prev меняется не только название месяца, но и отображение дней месяца в самом календаре
 - выделять текущий день
-- отображать дни предыдущего и следующего месяцев
+- отображать дни следующего месяца
+- когда листаем влево сбивается показ слайдов(первый не показывается)
+- переключение года в хэдере
 */
 
 class CalendarHeader extends BasicComponent {
@@ -184,18 +185,18 @@ class CalendarHeader extends BasicComponent {
           },
         })
       );
-      this._days.renderUpdateNext();
+      this._days.render();
     });
     this._subElements.leftBtn.addEventListener("click", (e) => {
       e.target.dispatchEvent(
         new CustomEvent("switchToPrevMonth", {
           bubbles: true,
           detail: {
-            monthNumber: ++this._dateData.currentMonth - 1,
+            monthNumber: --this._dateData.currentMonth + 1,
           },
         })
       );
-      this._days.renderUpdatePrev();
+      this._days.render();
     });
   }
 
@@ -330,72 +331,41 @@ class Days extends BasicComponent {
 
   _init() {
     super._init();
+    this._getPrevMonthLastDays();
     this._getCurrentMonthDays();
-    // this._getPrevMonthDays();
-    // this._setStateActiveMonth();
+    this._getNextMonthFirstDays();
     console.log(this._dateData);
-    // this._getPrevMonth;
-    this._render();
+    this.render();
   }
 
-  // _getDay() {
-  //   if (this._today == 0) {
-  //     this._today = 7;
-  //   }
-  //   return this._today - 1;
-  // }
-
-  //активный месяц = текущий месяц +/-1 при каждом клике и должен соответствовать i в массиве месяцев
-  //сюда активный должен приходить из слайдера
-  // _setStateActiveMonth() {
-  //   // this._dateData.currentMonth;
-  //   this._months.find((month, i) => {
-  //     //this._state.activeMonth
-  //     if (this._state.activeMonth === i) {
-  //       console.log(month);
-  //       return month;
-  //     }
-  //   });
-  // }
-
-  // _getPrevMonth() {
-  //   this._dateData.currentMonth + 1;
-  //   this._render();
-  // }
-
-  // _getFirstDateOfMonth() {
-  //   return new Date(this._dateData.currentYear, this._dateData.currentMonth, 1).getDate(); //firstDay
-  // }
+  _getFirstDayOfMonth() {
+    return new Date(this._dateData.currentYear, this._dateData.currentMonth, 0).getDay(); //firstDay
+  }
 
   _getLastDateOfMonth() {
-    return new Date(this._dateData.currentYear, this._dateData.currentMonth + 1, 0).getDate(); //lastDay
+    return new Date(this._dateData.currentYear, this._dateData.currentMonth + 1, 0).getDate(); //lastDate
   }
 
-  // _getLastDateOfPrevMonth() {
-  //   return new Date(this._dateData.currentYear, this._dateData.currentMonth, 0).getDate(); //lastDayofPrevMonth
-  // }
+  _getLastDayOfMonth() {
+    return new Date(this._dateData.currentYear, this._dateData.currentMonth, this._getLastDateOfMonth()).getDay(); //lastDay !!
+  }
 
-  // _getPrevMonthDays() {
-  //   for (let i = this._getFirstDateOfMonth(); i > 0; i--) {
-  //     let prev = this._getLastDateOfPrevMonth() - i + 1;
-  //     console.log(prev);
-  //     this._prevMonthDays.push(prev);
-  //     // this._days += this._getLastDateOfPrevMonth() - i + 1;
-  //   }
-  // }
+  _getFirstDateOfNextMonth() {
+    return new Date(this._dateData.currentYear, this._dateData.currentMonth + 1, 0).getDate(); //lastDateofPrevMonth
+  }
 
-  // _getPrevMonthDays() {
-  //   for (let i = this._getFirstDateOfMonth(); i > 0; i--) {
-  //     this._prevMonthDays.push(i);
-  //     // let prev = this._getLastDateOfPrevMonth() - i + 1;
-  //     // console.log(prev);
-  //     // this._prevMonthDays.push(prev);
-  //     // console.log(this._prevMonthDays);
-  //   }
-  // }
+  _getPrevMonthLastDays() {
+    for (let i = this._getFirstDayOfMonth(); i > 0; i--) {
+      this._prevMonthDays.push(this._getLastDateOfPrevMonth() - i + 1);
+    }
+  }
 
-  //заполняем текущий месяц
-  //должен вызываться в ините и при нажатии стрелочки следующего месяца, убрать из рендера
+  _getNextMonthFirstDays() {
+    for (let i = this._getLastDayOfMonth(); i < 7; i++) {
+      this._nextMonthDays.push(i - this._getLastDayOfMonth() + 1);
+    }
+  } //начинаем отсюда
+
   _getCurrentMonthDays() {
     for (let i = 1; i <= this._getLastDateOfMonth(); i++) {
       this._currMonthDays.push(i);
@@ -404,69 +374,76 @@ class Days extends BasicComponent {
 
   getNextMonthDays(nextMonth) {
     let lastDateNextMonth = new Date(this._dateData.currentYear, nextMonth, 0).getDate();
+    let firstDayOfNextMonth = new Date(this._dateData.currentYear, nextMonth - 1, 0).getDay();
+    let lastDatesOfMonthBeforeNextMonth = new Date(this._dateData.currentYear, nextMonth, 0).getDate();
+    let lastDayOfNextMonth = new Date(this._dateData.currentYear, nextMonth - 1, 0).getDay();
 
     for (let i = 1; i <= lastDateNextMonth; i++) {
-      this._nextMonthDays.push(i);
+      this._currMonthDays.push(i);
+    }
+
+    for (let i = firstDayOfNextMonth; i > 0; i--) {
+      this._prevMonthDays.push(lastDatesOfMonthBeforeNextMonth - i + 1);
+    }
+    //проверить
+    for (let i = lastDayOfNextMonth; i > 0; i--) {
+      this._nextMonthDays.push(i - lastDayOfNextMonth + 1);
     }
   }
 
   getPrevMonthDays(prevMonth) {
     let lastDatePrevMonth = new Date(this._dateData.currentYear, prevMonth, 0).getDate();
+    let firstDayOfPrevMonth = new Date(this._dateData.currentYear, prevMonth - 1, 0).getDay();
+    let lastDatesOfMonthBeforePrevMonth = new Date(this._dateData.currentYear, prevMonth - 1, 0).getDate();
+    let lastDayOfPrevMonth = new Date(this._dateData.currentYear, prevMonth - 1, 0).getDay();
 
     for (let i = 1; i <= lastDatePrevMonth; i++) {
-      this._prevMonthDays.push(i);
-      console.log(this._prevMonthDays);
+      this._currMonthDays.push(i);
+    }
+
+    for (let i = firstDayOfPrevMonth; i > 0; i--) {
+      this._prevMonthDays.push(lastDatesOfMonthBeforePrevMonth - i + 1);
+    }
+    //проверить
+
+    for (let i = lastDayOfNextMonth; i > 0; i--) {
+      this._nextMonthDays.push(i - lastDayOfNextMonth + 1);
     }
   }
 
-  // _getCurrentDay() {
-  //   if (this._today) {
-  //     this._days += this._today;
-  //   }
-  // }
-
   _generateCurrentDays() {
+    console.log(new Date());
     return this._currMonthDays.map((day) => {
-      return new this._Day(day, { curr: true, prev: false, next: false }).element;
-      // if (this._dateData.today === day) {
-      //   return new this._Day(day, { curr: true, prev: false, next: false }).element;
-      // }
-      // return new this._Day(day, { curr: false, prev: false, next: false }).element;
+      this._currMonthDays = [];
+      //как-то доделать условие
+      if (this._dateData.currentMonth && this._dateData.today === day) {
+        console.log(this._dateData.currentMonth && this._dateData.today === day);
+        return new this._Day(day, { curr: true, off: false }).element;
+      } else {
+        return new this._Day(day, { curr: false, off: false }).element;
+      }
     });
   }
 
-  _generateNextDays() {
-    return this._nextMonthDays.map((day) => {
-      this._nextMonthDays = [];
-      return new this._Day(day, { curr: true, prev: false, next: false }).element;
-    });
-  }
-  //неправильно отображает
-  _generatePrevDays() {
-    console.log(this._prevMonthDays);
+  _generatePrevMonthLastDays() {
     return this._prevMonthDays.map((day) => {
       this._prevMonthDays = [];
-      return new this._Day(day, { curr: true, prev: false, next: false }).element;
+      return new this._Day(day, { curr: false, off: true }).element;
     });
   }
 
-  _render() {
+  _generateNextMonthFirstDays() {
+    return this._nextMonthDays.map((day) => {
+      this._nextMonthDays = [];
+      return new this._Day(day, { curr: false, off: true }).element;
+    });
+  }
+
+  render() {
     this._element.innerHTML = "";
-    // this._element.append(...this._generatePrevDays());
-    // console.log(this._generatePrevDays());
-    // this._element.innerHTML = "";
+    this._element.append(...this._generatePrevMonthLastDays());
     this._element.append(...this._generateCurrentDays());
-  }
-
-  renderUpdateNext() {
-    this._element.innerHTML = "";
-    this._element.append(...this._generateNextDays());
-  }
-
-  //работает неверно!
-  renderUpdatePrev() {
-    this._element.innerHTML = "";
-    this._element.append(...this._generatePrevDays());
+    this._element.append(...this._generateNextMonthFirstDays());
   }
 
   _getTemplate() {
@@ -475,13 +452,11 @@ class Days extends BasicComponent {
 }
 
 class Day extends BasicComponent {
-  constructor(day, { curr, prev, next }) {
+  constructor(day, { curr, off }) {
     super();
     this._day = day;
     this._curr = curr;
-    this._prev = prev;
-    this._next = next;
-
+    this._off = off;
     this._init();
   }
 
@@ -492,8 +467,8 @@ class Day extends BasicComponent {
   //передать состояние today, prev и next, закинуть их в условия
 
   _render() {
-    this._currDay ? this._element.classList.add("day--today") : "";
-    this._prev ? this._element.classList.add("day--prev") : "";
+    this._curr ? this._element.classList.add("day--today") : "";
+    this._off ? this._element.classList.add("day--off") : "";
     // this._element.classList.add("day--prev");
     // this._element.classList.add("day--next");
   }
