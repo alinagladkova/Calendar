@@ -317,10 +317,6 @@ class Days extends BasicComponent {
   _prevMonthDays = [];
   _nextMonthDays = [];
 
-  _state = {
-    activeMonth: 0,
-  };
-
   constructor(dateData, months, Day) {
     super();
     this._dateData = dateData;
@@ -334,12 +330,11 @@ class Days extends BasicComponent {
     this._getPrevMonthLastDays();
     this._getCurrentMonthDays();
     this._getNextMonthFirstDays();
-    console.log(this._dateData);
     this.render();
   }
 
   _getFirstDayOfMonth() {
-    return new Date(this._dateData.currentYear, this._dateData.currentMonth, 0).getDay(); //firstDay
+    return new Date(this._dateData.currentYear, this._dateData.currentMonth, 1).getDay(); //firstDay
   }
 
   _getLastDateOfMonth() {
@@ -347,24 +342,28 @@ class Days extends BasicComponent {
   }
 
   _getLastDayOfMonth() {
-    return new Date(this._dateData.currentYear, this._dateData.currentMonth, this._getLastDateOfMonth()).getDay(); //lastDay !!
+    return new Date(this._dateData.currentYear, this._dateData.currentMonth, this._getLastDateOfMonth()).getDay(); //lastDay
   }
 
-  _getFirstDateOfNextMonth() {
-    return new Date(this._dateData.currentYear, this._dateData.currentMonth + 1, 0).getDate(); //lastDateofPrevMonth
+  _getLastDateOfPrevMonth() {
+    return new Date(this._dateData.currentYear, this._dateData.currentMonth, 0).getDate(); //lastDateofPrevMonth
   }
 
   _getPrevMonthLastDays() {
-    for (let i = this._getFirstDayOfMonth(); i > 0; i--) {
+    for (let i = this._getFirstDayOfMonth(); i > 1; i--) {
       this._prevMonthDays.push(this._getLastDateOfPrevMonth() - i + 1);
     }
   }
 
   _getNextMonthFirstDays() {
     for (let i = this._getLastDayOfMonth(); i < 7; i++) {
-      this._nextMonthDays.push(i - this._getLastDayOfMonth() + 1);
+      if (this._getLastDayOfMonth() === 6) {
+        this._nextMonthDays = [];
+      } else {
+        this._nextMonthDays.push(i - this._getLastDayOfMonth() + 1);
+      }
     }
-  } //начинаем отсюда
+  }
 
   _getCurrentMonthDays() {
     for (let i = 1; i <= this._getLastDateOfMonth(); i++) {
@@ -373,10 +372,12 @@ class Days extends BasicComponent {
   }
 
   getNextMonthDays(nextMonth) {
+    let firstDayOfNextMonth = new Date(this._dateData.currentYear, nextMonth - 1, 1).getDay() - 1;
     let lastDateNextMonth = new Date(this._dateData.currentYear, nextMonth, 0).getDate();
-    let firstDayOfNextMonth = new Date(this._dateData.currentYear, nextMonth - 1, 0).getDay();
-    let lastDatesOfMonthBeforeNextMonth = new Date(this._dateData.currentYear, nextMonth, 0).getDate();
-    let lastDayOfNextMonth = new Date(this._dateData.currentYear, nextMonth - 1, 0).getDay();
+    let lastDayOfNextMonth = new Date(this._dateData.currentYear, nextMonth - 1, lastDateNextMonth).getDay() - 1;
+    let lastDatesOfMonthBeforeNextMonth = new Date(this._dateData.currentYear, nextMonth - 1, 0).getDate();
+
+    firstDayOfNextMonth === -1 ? (firstDayOfNextMonth = 6) : firstDayOfNextMonth; //условие учета того, что неделя начинаетс с пн, а не вск
 
     for (let i = 1; i <= lastDateNextMonth; i++) {
       this._currMonthDays.push(i);
@@ -385,17 +386,23 @@ class Days extends BasicComponent {
     for (let i = firstDayOfNextMonth; i > 0; i--) {
       this._prevMonthDays.push(lastDatesOfMonthBeforeNextMonth - i + 1);
     }
-    //проверить
-    for (let i = lastDayOfNextMonth; i > 0; i--) {
-      this._nextMonthDays.push(i - lastDayOfNextMonth + 1);
+
+    for (let i = lastDayOfNextMonth; i < 6; i++) {
+      if (lastDayOfNextMonth === 6) {
+        this._nextMonthDays = [];
+      } else {
+        this._nextMonthDays.push(i - lastDayOfNextMonth + 1);
+      }
     }
   }
 
   getPrevMonthDays(prevMonth) {
+    let firstDayOfPrevMonth = new Date(this._dateData.currentYear, prevMonth - 1, 1).getDay() - 1;
     let lastDatePrevMonth = new Date(this._dateData.currentYear, prevMonth, 0).getDate();
-    let firstDayOfPrevMonth = new Date(this._dateData.currentYear, prevMonth - 1, 0).getDay();
+    let lastDayOfPrevMonth = new Date(this._dateData.currentYear, prevMonth - 1, lastDatePrevMonth).getDay();
     let lastDatesOfMonthBeforePrevMonth = new Date(this._dateData.currentYear, prevMonth - 1, 0).getDate();
-    let lastDayOfPrevMonth = new Date(this._dateData.currentYear, prevMonth - 1, 0).getDay();
+
+    firstDayOfPrevMonth === -1 ? (firstDayOfPrevMonth = 6) : firstDayOfPrevMonth;
 
     for (let i = 1; i <= lastDatePrevMonth; i++) {
       this._currMonthDays.push(i);
@@ -404,24 +411,22 @@ class Days extends BasicComponent {
     for (let i = firstDayOfPrevMonth; i > 0; i--) {
       this._prevMonthDays.push(lastDatesOfMonthBeforePrevMonth - i + 1);
     }
-    //проверить
 
-    for (let i = lastDayOfNextMonth; i > 0; i--) {
-      this._nextMonthDays.push(i - lastDayOfNextMonth + 1);
+    for (let i = lastDayOfPrevMonth; i < 7; i++) {
+      if (lastDayOfPrevMonth === 0) {
+        this._nextMonthDays = [];
+      } else {
+        this._nextMonthDays.push(i - lastDayOfPrevMonth + 1);
+      }
     }
   }
 
   _generateCurrentDays() {
-    console.log(new Date());
+    // console.log(new Date());
     return this._currMonthDays.map((day) => {
       this._currMonthDays = [];
-      //как-то доделать условие
-      if (this._dateData.currentMonth && this._dateData.today === day) {
-        console.log(this._dateData.currentMonth && this._dateData.today === day);
-        return new this._Day(day, { curr: true, off: false }).element;
-      } else {
-        return new this._Day(day, { curr: false, off: false }).element;
-      }
+      return new this._Day(day, { curr: false, off: false }).element;
+      // }
     });
   }
 
@@ -452,6 +457,10 @@ class Days extends BasicComponent {
 }
 
 class Day extends BasicComponent {
+  _state = {
+    curr: false,
+  };
+
   constructor(day, { curr, off }) {
     super();
     this._day = day;
@@ -462,12 +471,22 @@ class Day extends BasicComponent {
 
   _init() {
     super._init();
+    // this._setStateToday();
     this._render();
   }
-  //передать состояние today, prev и next, закинуть их в условия
+
+  // _setStateToday() {
+  //   return this._day === new Date().getDate() && this._month === new Date().getMonth() ? (this._state.curr = true) : (this._state.curr = false);
+  // }
 
   _render() {
-    this._curr ? this._element.classList.add("day--today") : "";
+    // if (
+    //   this._day === this._dateData.today &&
+    //   this._dateData.currentMonth === new Date().getMonth() &&
+    //   this._dateData.currentYear === new Date().getFullYear()
+    // ) {
+    // this._setStateToday() ? this._element.classList.add("day--today") : "";
+    // }
     this._off ? this._element.classList.add("day--off") : "";
     // this._element.classList.add("day--prev");
     // this._element.classList.add("day--next");
