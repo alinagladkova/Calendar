@@ -43,6 +43,10 @@ class BasicComponent {
 class Header extends BasicComponent {
   _eventYears = [];
 
+  _state = {
+    activeYear: null,
+  };
+
   constructor({ currentYear }, Option) {
     super();
     this._currentYear = currentYear;
@@ -59,9 +63,14 @@ class Header extends BasicComponent {
     this._eventYears.push(this._currentYear - 2, this._currentYear - 1, this._currentYear, this._currentYear + 1, this._currentYear + 2);
   }
 
+  _setStateActiveYear() {
+    this._state.activeYear = this._currentYear;
+    return this._state.activeYear;
+  }
+
   _generateOptions() {
     return this._eventYears.map((year) => {
-      return new this._Option(year).element;
+      return new this._Option(year, this._setStateActiveYear()).element;
     });
   }
 
@@ -80,14 +89,21 @@ class Header extends BasicComponent {
 }
 
 class Option extends BasicComponent {
-  constructor(value) {
+  constructor(value, activeValue) {
     super();
     this._value = value;
+    this._activeValue = activeValue;
+
     this._init();
   }
 
   _init() {
     super._init();
+    this._render();
+  }
+
+  _render() {
+    +this._element.value === this._activeValue ? (this._element.selected = true) : (this._element.selected = false);
   }
 
   _getTemplate() {
