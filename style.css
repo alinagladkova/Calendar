@@ -87,6 +87,7 @@ img {
   justify-content: space-between;
   padding-bottom: 10px;
   border-bottom: 1px solid rgb(121, 85, 19);
+  font-size: 18px;
 }
 
 .swiper {
@@ -128,7 +129,7 @@ img {
 
 .calendar-header__text {
   margin-right: 10px;
-  font-size: 16px;
+  font-size: 18px;
 }
 
 .btn--hide {
@@ -158,6 +159,7 @@ img {
   z-index: 1;
   cursor: pointer;
   margin-top: 30px;
+  font-weight: 700;
 }
 
 .calendar__days {
@@ -167,8 +169,8 @@ img {
 .day::before {
   position: absolute;
   content: "";
-  height: 30px;
-  width: 30px;
+  height: 35px;
+  width: 35px;
   top: 50%;
   left: 50%;
   z-index: -1;
@@ -182,11 +184,15 @@ img {
 
 .day--off {
   color: grey;
+  font-weight: normal;
 }
 
 .day--today {
   font-size: 20px;
   font-weight: 900;
-  color: rgb(120, 57, 161);
+  /* color: rgb(120, 57, 161); */
+  color: #db2a85;
+  text-shadow: 1px 1px 2px rgb(179, 121, 174);
+
   /* border: 1px solid rgb(120, 57, 161); */
 }
