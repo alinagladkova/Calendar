@@ -4,13 +4,6 @@ import { Swiper } from "/node_modules/swiper/swiper-bundle.mjs";
 
 const week = ["ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "ВС"];
 const months = ["январь", "февраль", "март", "апрель", "май", "июнь", "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"];
-const yearsRange = [
-  new Date().getFullYear() - 2,
-  new Date().getFullYear() - 1,
-  new Date().getFullYear(),
-  new Date().getFullYear() + 1,
-  new Date().getFullYear() + 2,
-];
 
 function createElement(html) {
   const root = document.createElement("div");
@@ -43,85 +36,6 @@ class BasicComponent {
   }
 }
 
-class Header extends BasicComponent {
-  _eventYears = [];
-
-  constructor({ currentYear }, yearsRange, Option) {
-    super();
-    this._currentYear = currentYear;
-    this._yearsRange = yearsRange;
-    this._Option = Option;
-    this._init();
-  }
-
-  _init() {
-    super._init();
-    this._addListeners();
-    this._render(this._currentYear);
-  }
-
-  _addListeners() {
-    this._subElements.select.addEventListener("change", (e) => {
-      this._render(e.target.value);
-    });
-
-    this._subElements.select.addEventListener("change", (e) => {
-      e.target.dispatchEvent(
-        new CustomEvent("switchTheYear", {
-          bubbles: true,
-          detail: {
-            chosenYear: e.target.value,
-          },
-        })
-      );
-    });
-  }
-
-  _generateOptions(selectedYear) {
-    return this._yearsRange.map((year) => {
-      return new this._Option(year, this._currentYear, selectedYear).element;
-    });
-  }
-
-  _render(selectedYear) {
-    this._subElements.select.innerHTML = "";
-    this._subElements.select.append(...this._generateOptions(selectedYear));
-  }
-
-  _getTemplate() {
-    return `<form action="#" method="post" class="header-form">
-							<div class="header-form__field-wrapper">
-								<label for="year" class="header-form__label">Календарь мероприятий</label>
-								<select name="year" id="year" data-element="select" class="header-form__select"></select>
-							</div>
-      			</form>`;
-  }
-}
-
-class Option extends BasicComponent {
-  constructor(value, currentYear, selectedYear) {
-    super();
-    this._value = value;
-    this._currentYear = currentYear;
-    this._selectedYear = selectedYear;
-    this._init();
-  }
-
-  _init() {
-    super._init();
-    +this._element.value === this._currentYear ? (this._element.selected = true) : (this._element.selected = false);
-    this._render();
-  }
-
-  _render() {
-    +this._element.value === +this._selectedYear ? (this._element.selected = true) : (this._element.selected = false);
-  }
-
-  _getTemplate() {
-    return `<option value="${this._value}" class="header-form__option">${this._value}</option>`;
-  }
-}
-
 class CalendarWrapper extends BasicComponent {
   constructor(dateData, months, week, Calendar, CalendarHeader, monthSlider, Slide, CalendarMain, WeekDays, days, Day) {
     super();
@@ -138,12 +52,14 @@ class CalendarWrapper extends BasicComponent {
     this._Day = Day;
     this._init();
   }
+
   _init() {
     super._init();
     this._render();
   }
 
   _render() {
+    this._element.innerHTML = "";
     this._element.insertAdjacentElement(
       "afterbegin",
       new this._Calendar(
@@ -186,6 +102,7 @@ class Calendar extends BasicComponent {
   }
 
   _render() {
+    this._element.innerHTML = "";
     this._element.insertAdjacentElement(
       "beforeend",
       new this._CalendarHeader(this._dateData, this._months, this._monthSlider, this._Slide, this._days).element
@@ -200,13 +117,6 @@ class Calendar extends BasicComponent {
     return `<div class="calendar"></div>`;
   }
 }
-
-/*
-Задачи:
-- когда листаем влево сбивается показ слайдов(первый не показывается)
-- переключение года в хэдере
-- кнопка Свернуть в хэдере календаря
-*/
 
 class CalendarHeader extends BasicComponent {
   constructor(dateData, months, monthSlider, Slide, days) {
@@ -236,6 +146,7 @@ class CalendarHeader extends BasicComponent {
         })
       );
     });
+
     this._subElements.leftBtn.addEventListener("click", (e) => {
       e.target.dispatchEvent(
         new CustomEvent("switchToPrevMonth", {
@@ -266,10 +177,6 @@ class CalendarHeader extends BasicComponent {
 								<div class="btn swiper-button-prev"><i class="fa-solid fa-chevron-left" data-element = "leftBtn"></i></div>
 								<div class="btn swiper-button-next"><i class="fa-solid fa-chevron-right" data-element = "rightBtn"></i></div>
 							</div>
-							<button class="btn calendar-header__btn btn--hide">
-								<p class="calendar-header__text">Свернуть</p>
-								<i class="fa-solid fa-chevron-down"></i>
-							</button>
 						</div>`;
   }
 }
@@ -306,6 +213,7 @@ class CalendarMain extends BasicComponent {
     super._init();
     this._render();
   }
+
   _render() {
     this._element.insertAdjacentElement("beforeend", new this._WeekDays(this._week).element);
     this._element.insertAdjacentElement("beforeend", this._days.element);
@@ -365,14 +273,7 @@ class Days extends BasicComponent {
     this._getPrevMonthLastDays();
     this._getCurrentMonthDays();
     this._getNextMonthFirstDays();
-    this.setStateChosenYear(this._dateData.currentYear);
     this.render();
-  }
-
-  setStateChosenYear(year) {
-    this._state.chosenYear = year;
-
-    // this.render();
   }
 
   _getFirstDayOfMonth() {
@@ -469,7 +370,6 @@ class Days extends BasicComponent {
         (day === this._dateData.today && notCurrMonth === undefined) ||
         (notCurrMonth === this._dateData.currentMonth + 1 && this._dateData.currentYear === new Date().getFullYear());
 
-      console.log(currentDate);
       if (currentDate) {
         return new this._Day(day, { curr: this._dateData.today, off: false }).element;
       }
@@ -531,7 +431,6 @@ class Day extends BasicComponent {
 }
 
 const root = document.querySelector(".root");
-const header = new Header({ currentYear: new Date().getFullYear() }, yearsRange, Option);
 const days = new Days(
   { date: new Date(), today: new Date().getDate(), currentMonth: new Date().getMonth(), currentYear: new Date().getFullYear() },
   months,
@@ -549,11 +448,6 @@ root.addEventListener("switchToPrevMonth", (e) => {
   days.render(e.detail.monthNumber);
 });
 
-root.addEventListener("switchTheYear", (e) => {
-  days.setStateChosenYear(e.detail.chosenYear);
-  days.render(undefined);
-});
-
 const calendarWrapper = new CalendarWrapper(
   { date: new Date(), today: new Date().getDate(), currentMonth: new Date().getMonth(), currentYear: new Date().getFullYear() },
   months,
@@ -567,7 +461,7 @@ const calendarWrapper = new CalendarWrapper(
   days,
   Day
 );
-root.insertAdjacentElement("afterbegin", header.element);
+
 root.insertAdjacentElement("beforeend", calendarWrapper.element);
 
 new Swiper(".swiper", {

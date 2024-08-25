@@ -37,11 +37,7 @@ class BasicComponent {
 }
 
 class CalendarWrapper extends BasicComponent {
-  _state = {
-    calendarState: true,
-  };
-
-  constructor(dateData, months, week, Calendar, CalendarHeader, monthSlider, Slide, HideBtn, CalendarMain, WeekDays, days, Day) {
+  constructor(dateData, months, week, Calendar, CalendarHeader, monthSlider, Slide, CalendarMain, WeekDays, days, Day) {
     super();
     this._dateData = dateData;
     this._months = months;
@@ -50,20 +46,16 @@ class CalendarWrapper extends BasicComponent {
     this._CalendarHeader = CalendarHeader;
     this._monthSlider = monthSlider;
     this._Slide = Slide;
-    this._HideBtn = HideBtn;
     this._CalendarMain = CalendarMain;
     this._WeekDays = WeekDays;
     this._days = days;
     this._Day = Day;
     this._init();
   }
+
   _init() {
     super._init();
     this._render();
-  }
-
-  getCalendarState(calendarState) {
-    this._state.calendarState = calendarState;
   }
 
   _render() {
@@ -77,12 +69,10 @@ class CalendarWrapper extends BasicComponent {
         this._CalendarHeader,
         this._monthSlider,
         this._Slide,
-        this._HideBtn,
         this._CalendarMain,
         this._WeekDays,
         this._days,
-        this._Day,
-        this._state.calendarState
+        this._Day
       ).element
     );
   }
@@ -92,7 +82,7 @@ class CalendarWrapper extends BasicComponent {
 }
 
 class Calendar extends BasicComponent {
-  constructor(dateData, months, week, CalendarHeader, monthSlider, Slide, HideBtn, CalendarMain, WeekDays, days, Day, calendarState) {
+  constructor(dateData, months, week, CalendarHeader, monthSlider, Slide, CalendarMain, WeekDays, days, Day) {
     super();
     this._dateData = dateData;
     this._months = months;
@@ -100,12 +90,10 @@ class Calendar extends BasicComponent {
     this._CalendarHeader = CalendarHeader;
     this._monthSlider = monthSlider;
     this._Slide = Slide;
-    this._HideBtn = HideBtn;
     this._CalendarMain = CalendarMain;
     this._WeekDays = WeekDays;
     this._days = days;
     this._Day = Day;
-    this._calendarState = calendarState;
     this._init();
   }
   _init() {
@@ -117,11 +105,11 @@ class Calendar extends BasicComponent {
     this._element.innerHTML = "";
     this._element.insertAdjacentElement(
       "beforeend",
-      new this._CalendarHeader(this._dateData, this._months, this._monthSlider, this._Slide, this._HideBtn, this._days).element
+      new this._CalendarHeader(this._dateData, this._months, this._monthSlider, this._Slide, this._days).element
     );
     this._element.insertAdjacentElement(
       "beforeend",
-      new this._CalendarMain(this._dateData, this._months, this._week, this._WeekDays, this._days, this._Day, this._calendarState).element
+      new this._CalendarMain(this._dateData, this._months, this._week, this._WeekDays, this._days, this._Day).element
     );
   }
 
@@ -131,13 +119,12 @@ class Calendar extends BasicComponent {
 }
 
 class CalendarHeader extends BasicComponent {
-  constructor(dateData, months, monthSlider, Slide, HideBtn, days) {
+  constructor(dateData, months, monthSlider, Slide, days) {
     super();
     this._dateData = dateData;
     this._months = months;
     this._monthSlider = monthSlider;
     this._Slide = Slide;
-    this._HideBtn = HideBtn;
     this._days = days;
     this._init();
   }
@@ -181,8 +168,6 @@ class CalendarHeader extends BasicComponent {
   _render() {
     this._subElements.wrapper.innerHTML = "";
     this._subElements.wrapper.append(...this._generateSlides());
-
-    this._element.insertAdjacentElement("beforeend", new this._HideBtn().element);
   }
 
   _getTemplate() {
@@ -192,56 +177,7 @@ class CalendarHeader extends BasicComponent {
 								<div class="btn swiper-button-prev"><i class="fa-solid fa-chevron-left" data-element = "leftBtn"></i></div>
 								<div class="btn swiper-button-next"><i class="fa-solid fa-chevron-right" data-element = "rightBtn"></i></div>
 							</div>
-
 						</div>`;
-  }
-}
-
-class HideBtn extends BasicComponent {
-  _state = {
-    CalendarIsOpen: true,
-  };
-
-  constructor() {
-    super();
-    this._init();
-  }
-
-  _init() {
-    super._init();
-    this._addListeners();
-    this._render();
-  }
-
-  _addListeners() {
-    this._element.addEventListener("click", (e) => {
-      this._setStateOpen();
-      e.target.dispatchEvent(
-        new CustomEvent("openCalendar", {
-          bubbles: true,
-          detail: {
-            calendarState: this._state.CalendarIsOpen,
-          },
-        })
-      );
-      this._render();
-    });
-  }
-
-  _setStateOpen() {
-    this._state.CalendarIsOpen = !this._state.CalendarIsOpen;
-  }
-
-  _render() {
-    if (this._state.CalendarIsOpen) {
-      this._element.innerHTML = `<p class="calendar-header__text">Свернуть</p><i class="fa-solid fa-chevron-down"></i>`;
-    } else {
-      this._element.innerHTML = `<p class="calendar-header__text">Свернуть</p><i class="fa-solid fa-chevron-up"></i>`;
-    }
-  }
-
-  _getTemplate() {
-    return `<button class="btn calendar-header__btn btn--hide"></button>`;
   }
 }
 
@@ -262,7 +198,7 @@ class Slide extends BasicComponent {
 }
 
 class CalendarMain extends BasicComponent {
-  constructor(dateData, months, week, WeekDays, days, Day, calendarState) {
+  constructor(dateData, months, week, WeekDays, days, Day) {
     super();
     this._dateData = dateData;
     this._months = months;
@@ -270,7 +206,6 @@ class CalendarMain extends BasicComponent {
     this._WeekDays = WeekDays;
     this._days = days;
     this._Day = Day;
-    this._calendarState = calendarState;
     this._init();
   }
 
@@ -282,14 +217,6 @@ class CalendarMain extends BasicComponent {
   _render() {
     this._element.insertAdjacentElement("beforeend", new this._WeekDays(this._week).element);
     this._element.insertAdjacentElement("beforeend", this._days.element);
-
-    console.log(this._calendarState);
-
-    if (this._calendarState) {
-      this._element.classList.remove("calendar__main--inable");
-    } else {
-      this._element.classList.add("calendar__main--inable");
-    }
   }
 
   _getTemplate() {
@@ -521,10 +448,6 @@ root.addEventListener("switchToPrevMonth", (e) => {
   days.render(e.detail.monthNumber);
 });
 
-root.addEventListener("openCalendar", (e) => {
-  calendarWrapper.getCalendarState(e.detail.calendarState);
-});
-
 const calendarWrapper = new CalendarWrapper(
   { date: new Date(), today: new Date().getDate(), currentMonth: new Date().getMonth(), currentYear: new Date().getFullYear() },
   months,
@@ -533,7 +456,6 @@ const calendarWrapper = new CalendarWrapper(
   CalendarHeader,
   Swiper,
   Slide,
-  HideBtn,
   CalendarMain,
   WeekDays,
   days,
