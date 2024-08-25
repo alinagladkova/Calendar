@@ -33,9 +33,6 @@ img {
   margin: 20px 70px;
 }
 
-.header-form__field-wrapper {
-}
-
 .header-form__label {
   color: rgb(236, 215, 234);
   font-size: 28px;
@@ -51,9 +48,6 @@ img {
   box-shadow: 1px 1px 5px #8f8766;
   color: rgb(121, 19, 70);
   font-weight: 700;
-}
-
-.header-form__option {
 }
 
 .calendar-wrapper {
@@ -139,6 +133,10 @@ img {
   padding: 20px 0;
 }
 
+.calendar__main--inable {
+  display: none;
+}
+
 .calendar__main ul {
   display: flex;
   list-style: none;
@@ -190,9 +188,6 @@ img {
 .day--today {
   font-size: 20px;
   font-weight: 900;
-  /* color: rgb(120, 57, 161); */
   color: #db2a85;
   text-shadow: 1px 1px 2px rgb(179, 121, 174);
-
-  /* border: 1px solid rgb(120, 57, 161); */
 }

@@ -2,9 +2,15 @@
 
 import { Swiper } from "/node_modules/swiper/swiper-bundle.mjs";
 
-const week = ["ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "ВС"]; // этот массив точно оставляем
+const week = ["ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "ВС"];
 const months = ["январь", "февраль", "март", "апрель", "май", "июнь", "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"];
-//"январь", "февраль", "март", "апрель", "май", "июнь", "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"
+const yearsRange = [
+  new Date().getFullYear() - 2,
+  new Date().getFullYear() - 1,
+  new Date().getFullYear(),
+  new Date().getFullYear() + 1,
+  new Date().getFullYear() + 2,
+];
 
 function createElement(html) {
   const root = document.createElement("div");
@@ -37,45 +43,49 @@ class BasicComponent {
   }
 }
 
-//работаем тут
-// привязать год к месяцам в календаре
-//selected сделать
 class Header extends BasicComponent {
   _eventYears = [];
 
-  _state = {
-    activeYear: null,
-  };
-
-  constructor({ currentYear }, Option) {
+  constructor({ currentYear }, yearsRange, Option) {
     super();
     this._currentYear = currentYear;
+    this._yearsRange = yearsRange;
     this._Option = Option;
     this._init();
   }
+
   _init() {
     super._init();
-    this._fillEventYears();
-    this._render();
+    this._addListeners();
+    this._render(this._currentYear);
   }
 
-  _fillEventYears() {
-    this._eventYears.push(this._currentYear - 2, this._currentYear - 1, this._currentYear, this._currentYear + 1, this._currentYear + 2);
-  }
+  _addListeners() {
+    this._subElements.select.addEventListener("change", (e) => {
+      this._render(e.target.value);
+    });
 
-  _setStateActiveYear() {
-    this._state.activeYear = this._currentYear;
-    return this._state.activeYear;
-  }
-
-  _generateOptions() {
-    return this._eventYears.map((year) => {
-      return new this._Option(year, this._setStateActiveYear()).element;
+    this._subElements.select.addEventListener("change", (e) => {
+      e.target.dispatchEvent(
+        new CustomEvent("switchTheYear", {
+          bubbles: true,
+          detail: {
+            chosenYear: e.target.value,
+          },
+        })
+      );
     });
   }
 
-  _render() {
-    this._subElements.select.append(...this._generateOptions());
+  _generateOptions(selectedYear) {
+    return this._yearsRange.map((year) => {
+      return new this._Option(year, this._currentYear, selectedYear).element;
+    });
+  }
+
+  _render(selectedYear) {
+    this._subElements.select.innerHTML = "";
+    this._subElements.select.append(...this._generateOptions(selectedYear));
   }
 
   _getTemplate() {
@@ -89,21 +99,22 @@ class Header extends BasicComponent {
 }
 
 class Option extends BasicComponent {
-  constructor(value, activeValue) {
+  constructor(value, currentYear, selectedYear) {
     super();
     this._value = value;
-    this._activeValue = activeValue;
-
+    this._currentYear = currentYear;
+    this._selectedYear = selectedYear;
     this._init();
   }
 
   _init() {
     super._init();
+    +this._element.value === this._currentYear ? (this._element.selected = true) : (this._element.selected = false);
     this._render();
   }
 
   _render() {
-    +this._element.value === this._activeValue ? (this._element.selected = true) : (this._element.selected = false);
+    +this._element.value === +this._selectedYear ? (this._element.selected = true) : (this._element.selected = false);
   }
 
   _getTemplate() {
@@ -198,10 +209,6 @@ class Calendar extends BasicComponent {
 */
 
 class CalendarHeader extends BasicComponent {
-  _state = {
-    activeMonth: 0,
-  };
-
   constructor(dateData, months, monthSlider, Slide, days) {
     super();
     this._dateData = dateData;
@@ -215,7 +222,6 @@ class CalendarHeader extends BasicComponent {
     super._init();
     this._monthSlider;
     this._addListeners();
-    this._setStateActiveMonth();
     this._render();
   }
 
@@ -229,7 +235,6 @@ class CalendarHeader extends BasicComponent {
           },
         })
       );
-      // this._days.render();
     });
     this._subElements.leftBtn.addEventListener("click", (e) => {
       e.target.dispatchEvent(
@@ -240,20 +245,12 @@ class CalendarHeader extends BasicComponent {
           },
         })
       );
-      // this._days.render();
     });
-  }
-
-  _setStateActiveMonth() {} //
-
-  _getActiveMonth(html) {
-    //
-    return console.log(html); //
   }
 
   _generateSlides() {
     return this._months.map((monthName) => {
-      return new this._Slide(monthName, this._getActiveMonth.bind(this)).element;
+      return new this._Slide(monthName).element;
     });
   }
 
@@ -278,23 +275,14 @@ class CalendarHeader extends BasicComponent {
 }
 
 class Slide extends BasicComponent {
-  constructor(monthName, callback) {
+  constructor(monthName) {
     super();
     this._monthName = monthName;
-    this._callback = callback;
     this._init();
   }
 
   _init() {
     super._init();
-    //как выбрать активный слайд
-  }
-
-  _getActiveSlide() {
-    if (this._element.className === `swiper-slide-active`) {
-      console.log(this._callback(this._element));
-      this._callback(this._element);
-    }
   }
 
   _getTemplate() {
@@ -360,6 +348,10 @@ class Days extends BasicComponent {
   _prevMonthDays = [];
   _nextMonthDays = [];
 
+  _state = {
+    chosenYear: 0,
+  };
+
   constructor(dateData, months, Day) {
     super();
     this._dateData = dateData;
@@ -373,23 +365,30 @@ class Days extends BasicComponent {
     this._getPrevMonthLastDays();
     this._getCurrentMonthDays();
     this._getNextMonthFirstDays();
+    this.setStateChosenYear(this._dateData.currentYear);
     this.render();
   }
 
+  setStateChosenYear(year) {
+    this._state.chosenYear = year;
+
+    // this.render();
+  }
+
   _getFirstDayOfMonth() {
-    return new Date(this._dateData.currentYear, this._dateData.currentMonth, 1).getDay(); //firstDay
+    return new Date(this._state.chosenYear, this._dateData.currentMonth, 1).getDay(); //firstDay
   }
 
   _getLastDateOfMonth() {
-    return new Date(this._dateData.currentYear, this._dateData.currentMonth + 1, 0).getDate(); //lastDate
+    return new Date(this._state.chosenYear, this._dateData.currentMonth + 1, 0).getDate(); //lastDate
   }
 
   _getLastDayOfMonth() {
-    return new Date(this._dateData.currentYear, this._dateData.currentMonth, this._getLastDateOfMonth()).getDay(); //lastDay
+    return new Date(this._state.chosenYear, this._dateData.currentMonth, this._getLastDateOfMonth()).getDay(); //lastDay
   }
 
   _getLastDateOfPrevMonth() {
-    return new Date(this._dateData.currentYear, this._dateData.currentMonth, 0).getDate(); //lastDateofPrevMonth
+    return new Date(this._state.chosenYear, this._dateData.currentMonth, 0).getDate(); //lastDateofPrevMonth
   }
 
   _getPrevMonthLastDays() {
@@ -415,12 +414,12 @@ class Days extends BasicComponent {
   }
 
   getNextMonthDays(nextMonth) {
-    let firstDayOfNextMonth = new Date(this._dateData.currentYear, nextMonth - 1, 1).getDay() - 1;
-    let lastDateNextMonth = new Date(this._dateData.currentYear, nextMonth, 0).getDate();
-    let lastDayOfNextMonth = new Date(this._dateData.currentYear, nextMonth - 1, lastDateNextMonth).getDay() - 1;
-    let lastDatesOfMonthBeforeNextMonth = new Date(this._dateData.currentYear, nextMonth - 1, 0).getDate();
+    let firstDayOfNextMonth = new Date(this._state.chosenYear, nextMonth - 1, 1).getDay() - 1;
+    let lastDateNextMonth = new Date(this._state.chosenYear, nextMonth, 0).getDate();
+    let lastDayOfNextMonth = new Date(this._state.chosenYear, nextMonth - 1, lastDateNextMonth).getDay() - 1;
+    let lastDatesOfMonthBeforeNextMonth = new Date(this._state.chosenYear, nextMonth - 1, 0).getDate();
 
-    firstDayOfNextMonth === -1 ? (firstDayOfNextMonth = 6) : firstDayOfNextMonth; //условие учета того, что неделя начинаетс с пн, а не вск
+    firstDayOfNextMonth === -1 ? (firstDayOfNextMonth = 6) : firstDayOfNextMonth; //условие учета того, что неделя начинается с пн, а не вск
 
     for (let i = 1; i <= lastDateNextMonth; i++) {
       this._currMonthDays.push(i);
@@ -438,10 +437,10 @@ class Days extends BasicComponent {
   }
 
   getPrevMonthDays(prevMonth) {
-    let firstDayOfPrevMonth = new Date(this._dateData.currentYear, prevMonth - 1, 1).getDay() - 1;
-    let lastDatePrevMonth = new Date(this._dateData.currentYear, prevMonth, 0).getDate();
-    let lastDayOfPrevMonth = new Date(this._dateData.currentYear, prevMonth - 1, lastDatePrevMonth).getDay();
-    let lastDatesOfMonthBeforePrevMonth = new Date(this._dateData.currentYear, prevMonth - 1, 0).getDate();
+    let firstDayOfPrevMonth = new Date(this._state.chosenYear, prevMonth - 1, 1).getDay() - 1;
+    let lastDatePrevMonth = new Date(this._state.chosenYear, prevMonth, 0).getDate();
+    let lastDayOfPrevMonth = new Date(this._state.chosenYear, prevMonth - 1, lastDatePrevMonth).getDay();
+    let lastDatesOfMonthBeforePrevMonth = new Date(this._state.chosenYear, prevMonth - 1, 0).getDate();
 
     firstDayOfPrevMonth === -1 ? (firstDayOfPrevMonth = 6) : firstDayOfPrevMonth;
 
@@ -470,6 +469,7 @@ class Days extends BasicComponent {
         (day === this._dateData.today && notCurrMonth === undefined) ||
         (notCurrMonth === this._dateData.currentMonth + 1 && this._dateData.currentYear === new Date().getFullYear());
 
+      console.log(currentDate);
       if (currentDate) {
         return new this._Day(day, { curr: this._dateData.today, off: false }).element;
       }
@@ -531,12 +531,13 @@ class Day extends BasicComponent {
 }
 
 const root = document.querySelector(".root");
-const header = new Header({ currentYear: new Date().getFullYear() }, Option);
+const header = new Header({ currentYear: new Date().getFullYear() }, yearsRange, Option);
 const days = new Days(
   { date: new Date(), today: new Date().getDate(), currentMonth: new Date().getMonth(), currentYear: new Date().getFullYear() },
   months,
   Day
 );
+
 //================Custom Events
 root.addEventListener("switchToNextMonth", (e) => {
   days.getNextMonthDays(e.detail.monthNumber);
@@ -548,21 +549,10 @@ root.addEventListener("switchToPrevMonth", (e) => {
   days.render(e.detail.monthNumber);
 });
 
-//================Debounce
-// function debounce(handler, ms) {
-//   console.log(handler, ms);
-//   let timeoutID;
-//   return (...args) => {
-//     clearTimeout(timeoutID);
-
-//     timeoutID = setTimeout(() => {
-//       timeoutID = null;
-//       return handler.apply(this, args);
-//     }, ms);
-//   };
-// }
-
-//=================
+root.addEventListener("switchTheYear", (e) => {
+  days.setStateChosenYear(e.detail.chosenYear);
+  days.render(undefined);
+});
 
 const calendarWrapper = new CalendarWrapper(
   { date: new Date(), today: new Date().getDate(), currentMonth: new Date().getMonth(), currentYear: new Date().getFullYear() },
